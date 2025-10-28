@@ -5,21 +5,25 @@ const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fet
 const app = express();
 app.use(bodyParser.json());
 
-// ✅ Hardcoded values (fine for now)
 const VERIFICATION_KEY = "Ky95D2YTb14XKaQ6o91uJmPW3843VN";
 const MAKE_WEBHOOK_URL = "https://hook.eu2.make.com/qzb8y2hqnnwdfuolu7p01g29ori9l5b5";
 
-// ✅ Root endpoint — for quick server check
+// ✅ Root endpoint
 app.get("/", (req, res) => {
   res.status(200).send("Viva Webhook Relay is live");
 });
 
-// ✅ Viva verification endpoint — plain text OK response (no JSON)
+// ✅ Viva HEAD request support
+app.head("/webhook", (req, res) => {
+  res.status(200).send("OK");
+});
+
+// ✅ Viva GET verification
 app.get("/webhook", (req, res) => {
   res.status(200).send("OK");
 });
 
-// ✅ Forward Viva POST notifications to Make.com
+// ✅ Viva POST notifications → Make.com
 app.post("/webhook", async (req, res) => {
   try {
     await fetch(MAKE_WEBHOOK_URL, {
@@ -34,7 +38,6 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-// ✅ Use Render’s assigned port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Relay server is running on port ${PORT}`);
