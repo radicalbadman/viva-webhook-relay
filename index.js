@@ -1,44 +1,42 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
-
+const express = require('express');
+const axios = require('axios');
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
-const VERIFICATION_KEY = "Ky95D2YTb14XKaQ6o91uJmPW3843VN";
-const MAKE_WEBHOOK_URL = "https://hook.eu2.make.com/qzb8y2hqnnwdfuolu7p01g29ori9l5b5";
+// --- --- --- --- --- --- --- --- ---
+// --- 1. PASTE YOUR KEY FROM PART 1 HERE ---
+// --- --- --- --- --- --- --- --- ---
+const VIVA_VERIFICATION_KEY = "E35C5F2B3DAFDB693E46C4B6A5394F159F79A95C";
 
-// ✅ Root endpoint
-app.get("/", (req, res) => {
-  res.status(200).send("Viva Webhook Relay is live");
+// --- --- --- --- --- --- --- --- ---
+// --- 2. PASTE YOUR MAKE.COM URL HERE ---
+// --- --- --- --- --- --- --- --- ---
+const MAKE_WEBHOOK_URL = "https://hook.eu2.make.com/62o56iqwkyrst2td6yd6w2ow1usoyod4";
+
+// --- --- --- --- --- --- --- --- ---
+// --- DO NOT EDIT BELOW THIS LINE ---
+// --- --- --- --- --- --- --- --- ---
+
+const PORT = process.env.PORT || 10000;
+
+// Route 1: Viva's GET request for verification
+app.get('/', (req, res) => {
+  console.log('Received GET verification request.');
+  res.status(200).json({ "Key": VIVA_VERIFICATION_KEY });
 });
 
-// ✅ Viva HEAD request support
-app.head("/webhook", (req, res) => {
-  res.status(200).send("OK");
-});
-
-// ✅ Viva GET verification
-app.get("/webhook", (req, res) => {
-  res.status(200).send("OK");
-});
-
-// ✅ Viva POST notifications → Make.com
-app.post("/webhook", async (req, res) => {
+// Route 2: Viva's POST request with data
+app.post('/', async (req, res) => {
+  console.log('Received POST data, forwarding to Make.com...');
   try {
-    await fetch(MAKE_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(req.body),
-    });
-    res.status(200).send("Forwarded to Make.com");
-  } catch (err) {
-    console.error("Forwarding failed:", err);
-    res.status(500).send("Forwarding error");
+    await axios.post(MAKE_WEBHOOK_URL, req.body);
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('Error forwarding to Make.com:', error.message);
+    res.status(500).send('Error.');
   }
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Relay server is running on port ${PORT}`);
+  console.log(`Relay server listening on port ${PORT}`);
 });
